@@ -24,10 +24,12 @@ end
 
 to enter-coupe
   create-persons 1 [
-    move-to patch 0 4
+    ifelse random-float 1 < 0.5 [move-to patch 0 4 set heading 90 ]
+    [move-to patch 20 4 set heading -90]
     set seated? false
-    set heading 90
-    set social-confidence random-float 0.01
+
+    set spatial-awareness random-float 1
+    set social-confidence random-float 0.1
   ]
 end
 
@@ -39,8 +41,7 @@ end
 
 to move-people
   ask persons with [seated? = false] [
-    if (pycor >= 5) [ set heading heading + 4 ]
-    if (pycor <= 3) [ set heading heading - 4 ]
+    if (pycor >= 7) or (pycor <= 1) [ show "does this happen" die  ]
 
 
     ifelse can-sit? [
@@ -62,7 +63,7 @@ to move-people
           ifelse [taken?] of target = true
           ; Taken: depends on confidence
           [
-            ifelse (random-float 1.0 < social-confidence + (0.05 * sit-necessity)) [
+            ifelse sit-next-to? [
               move-to patch-here
               set seated? true
               set taken? true
@@ -87,24 +88,60 @@ to move-people
 
     if not check-right
     [
-      set heading heading - 3.5
+      ;set heading heading - 3.5
       if not check-left
       [
-        set heading heading + 3.5
-        fd 0.1
-      ]
+        ;set heading heading + 3.5
 
+      ]
+      fd 0.1
     ]
 
   ]
 end
 
+to-report sit-next-to?
+  let freeseats count patches with [taken? = false and chair? = true]
+  if (freeseats <= 2) [report true]
+  let busy freeseats / 40 ; count chairs
+  if ( random-float 10 < (busy) and social-confidence > 0.02 and sit-necessity > 0.5) [report true]
+
+  if any? patches with [taken? = false and window-seat? = true] and (spatial-awareness > 0.05) [ report false]
+
+  if (random-float 1.0 < (0.6 * social-confidence) + (0.4 * sit-necessity)) [report true]
+  report false
+
+end
+
 to-report sit-necessity
-  report pxcor / 8
+  report pxcor / 18
+end
+
+
+to-report do-i-want-this-seat? [ candidate ]
+  let result 0
+  let crowdedness count (patches with [taken? = true] in-radius 6)
+
+  ifelse sit-necessity > 0.5 [
+    set result result + 0.6
+  ]
+  [
+    ifelse (crowdedness > 0) [
+      set result result + 0.75 * ( 1 / crowdedness )
+    ]
+    ; Crowdedness = 0. We really do want this
+    [ set result result + 0.6 ]
+  ]
+
+
+  if (spatial-awareness < 0.15) [ set result result + 0.1 ]
+
+  report ifelse-value (random-float 1 < result) [true] [false]
 end
 
 to-report check-left
-  if ([taken?] of patch-left-and-ahead 49 1  = false) and random-float 1 < sit-necessity [
+  let patchleft patch-left-and-ahead 45 1
+  if ([taken?] of patchleft = false) and do-i-want-this-seat? patchleft [
     set heading heading - 3.5 fd 0.1
     report true
   ]
@@ -112,7 +149,8 @@ to-report check-left
 end
 
 to-report check-right
-  if ([taken?] of patch-right-and-ahead 49 1  = false) and random-float 1 < sit-necessity [
+  let patchright patch-right-and-ahead 45 1
+  if ([taken?] of patchright = false) and do-i-want-this-seat? patchright [
     set heading heading + 3.5 fd 0.1
     report true
   ]
