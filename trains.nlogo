@@ -39,6 +39,10 @@ end
 
 to move-people
   ask persons with [seated? = false] [
+    if (pycor >= 5) [ set heading heading + 4 ]
+    if (pycor <= 3) [ set heading heading - 4 ]
+
+
     ifelse can-sit? [
 
       ; Window seat
@@ -46,6 +50,7 @@ to move-people
         move-to patch-here
         set seated? true
         set taken? true
+        set pcolor black
         stop
       ]
       ; Not window seat
@@ -57,10 +62,11 @@ to move-people
           ifelse [taken?] of target = true
           ; Taken: depends on confidence
           [
-            ifelse (random-float 1.0 < social-confidence) [
+            ifelse (random-float 1.0 < social-confidence + (0.05 * sit-necessity)) [
               move-to patch-here
               set seated? true
               set taken? true
+              set pcolor black
               stop
             ][]
 
@@ -70,6 +76,7 @@ to move-people
             move-to target
             set seated? true
             set taken? true
+            set pcolor black
             stop
           ]
         ]
@@ -78,16 +85,40 @@ to move-people
     ] []
 
 
-    ; Look to the left
-    ifelse ([taken?] of patch-left-and-ahead 45 1  = false) [ set heading heading - 3.5 fd 0.1 ]
+    if not check-right
     [
-      ; Look to the right
-      ifelse ([taken?] of patch-right-and-ahead 45 1  = false) [ set heading heading + 3.5 fd 0.1 ]
-      [ fd 0.1 ]
+      set heading heading - 3.5
+      if not check-left
+      [
+        set heading heading + 3.5
+        fd 0.1
+      ]
 
     ]
+
   ]
 end
+
+to-report sit-necessity
+  report pxcor / 8
+end
+
+to-report check-left
+  if ([taken?] of patch-left-and-ahead 49 1  = false) and random-float 1 < sit-necessity [
+    set heading heading - 3.5 fd 0.1
+    report true
+  ]
+  report false
+end
+
+to-report check-right
+  if ([taken?] of patch-right-and-ahead 49 1  = false) and random-float 1 < sit-necessity [
+    set heading heading + 3.5 fd 0.1
+    report true
+  ]
+  report false
+end
+
 
 
 to-report is-window-seat?
