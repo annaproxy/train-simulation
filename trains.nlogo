@@ -27,7 +27,7 @@ to enter-coupe
     move-to patch 0 4
     set seated? false
     set heading 90
-    set social-confidence random-float 0.0001
+    set social-confidence random-float 0.01
   ]
 end
 
@@ -39,7 +39,7 @@ end
 
 to move-people
   ask persons with [seated? = false] [
-    if can-sit? [
+    ifelse can-sit? [
 
       ; Window seat
       ifelse is-window-seat? [
@@ -57,12 +57,12 @@ to move-people
           ifelse [taken?] of target = true
           ; Taken: depends on confidence
           [
-            if (random-float 1.0 < social-confidence) [
+            ifelse (random-float 1.0 < social-confidence) [
               move-to patch-here
               set seated? true
               set taken? true
               stop
-            ]
+            ][]
 
           ]
           ; Not taken: we're good
@@ -73,10 +73,9 @@ to move-people
             stop
           ]
         ]
-
       ]
 
-    ] ;[]
+    ] []
 
 
     ; Look to the left
