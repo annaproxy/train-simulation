@@ -1,5 +1,6 @@
 # Train Seating Simulation
-Summary: I do fun stuff with netlogo
+Summary: I do fun stuff with netlogo.
+This code sucks. Don't look at it. No one uses netlogo, so I hope it'll be fine
 
 ## How it works
 Passengers have certain parameters.
